@@ -1,113 +1,38 @@
-import React, { useState } from 'react';
-import { Form, Button, Container } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { AuthContext } from '../contexts/AuthContext';
 
-const BookingForm = () => {
-  const [formData, setFormData] = useState({
-  customerName: '',
-  serviceType: '',
-  bikeModel: '',
-  appointmentDate: '',
-});
+export default function BookingForm() {
+  const { user } = useContext(AuthContext);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicle, setSelectedVehicle] = useState('');
+  const [serviceType, setServiceType] = useState('');
+  const [date, setDate] = useState('');
 
+  useEffect(() => {
+    axios.get('/users/profile').then(res => setVehicles(res.data.vehicles || []));
+  }, []);
 
-  const handleChange = (e) => {
-    setFormData({ 
-      ...formData,
-      [e.target.name]: e.target.value 
-    });
+  const handleSubmit = e => {
+    e.preventDefault();
+    axios.post('/bookings', {
+      vehicle: vehicles[selectedVehicle],
+      serviceType,
+      date
+    }).then(() => alert('Booking created'));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    const response = await fetch('https://bike-service-backend-idw4.onrender.com/api/bookings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        customerName: formData.name,
-        serviceType: 'Standard Service', // Optional or add a dropdown for this
-        bikeModel: formData.bikeModel,
-        appointmentDate: formData.serviceDate,
-      }),
-    });
-
-    if (!response.ok) throw new Error('Failed to book service');
-
-    alert('Booking submitted successfully!');
-    setFormData({
-      name: '',
-      bikeModel: '',
-      serviceDate: '',
-      contact: '',
-    });
-
-  } catch (error) {
-    console.error('Booking error:', error);
-    alert('Server error. Try again later.');
-  }
-};
-
-
   return (
-    <Container className="mt-4">
-      <h3>Book Your Service</h3>
-      <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formName" className="mb-3">
-          <Form.Label>Name</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter full name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formModel" className="mb-3">
-          <Form.Label>Bike Model</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter bike model"
-            name="bikeModel"
-            value={formData.bikeModel}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formDate" className="mb-3">
-          <Form.Label>Service Date</Form.Label>
-          <Form.Control
-            type="date"
-            name="serviceDate"
-            value={formData.serviceDate}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formContact" className="mb-3">
-          <Form.Label>Contact Number</Form.Label>
-          <Form.Control
-            type="tel"
-            placeholder="Enter contact number"
-            name="contact"
-            value={formData.contact}
-            onChange={handleChange}
-            required
-          />
-        </Form.Group>
-
-        <Button variant="primary" type="submit">
-          Book Now
-        </Button>
-      </Form>
-    </Container>
+    <form onSubmit={handleSubmit} className="p-3 border rounded">
+      <h5>Create Booking</h5>
+      <select value={selectedVehicle} onChange={e => setSelectedVehicle(e.target.value)} className="form-select mb-2">
+        {vehicles.map((v, idx) => (
+          <option key={idx} value={idx}>{v.make} {v.model} ({v.plate})</option>
+        ))}
+      </select>
+      <input type="text" className="form-control mb-2" placeholder="Service Type" value={serviceType} onChange={e => setServiceType(e.target.value)} />
+      <input type="date" className="form-control mb-2" value={date} onChange={e => setDate(e.target.value)} />
+      <button className="btn btn-primary">Book</button>
+    </form>
   );
-};
-
-export default BookingForm;
+}

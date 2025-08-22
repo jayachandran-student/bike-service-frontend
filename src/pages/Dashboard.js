@@ -1,12 +1,18 @@
-import React from 'react';
+import React from "react";
 
-function Dashboard() {
+export default function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login"; // redirect to login
+  };
+
   return (
-    <div className="container mt-5">
-      <h2>Admin Dashboard</h2>
-      <p>This page will display charts and booking data.</p>
+    <div>
+      <h1>Welcome, {user?.email || "User"} 🎉</h1>
+      <button onClick={handleLogout}>Logout</button>
     </div>
   );
 }
-
-export default Dashboard;

@@ -1,14 +1,16 @@
-// src/pages/Login.js
+// src/pages/Register.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios"; // ✅ axios instance
 
-const Login = () => {
+const Register = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    username: "",
     email: "",
     password: "",
+    role: "renter",
   });
 
   const [message, setMessage] = useState("");
@@ -23,30 +25,34 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ axios baseURL = http://localhost:5000/api
-      const res = await api.post("/auth/login", formData);
+      // ✅ api already has baseURL = http://localhost:5000/api
+      const res = await api.post("/auth/register", formData);
 
-      // Save JWT token to localStorage
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-      }
-
-      setMessage("Login successful!");
+      setMessage(res.data.message || "Registration successful!");
       setTimeout(() => {
-        navigate("/profile");
+        navigate("/login");
       }, 1500);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Login failed");
+      setMessage(err.response?.data?.message || "Registration failed");
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
+    <div className="register-container">
+      <h2>Register</h2>
 
       {message && <p>{message}</p>}
 
       <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Enter username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+
         <input
           type="email"
           name="email"
@@ -65,10 +71,15 @@ const Login = () => {
           required
         />
 
-        <button type="submit">Login</button>
+        <select name="role" value={formData.role} onChange={handleChange}>
+          <option value="renter">Renter</option>
+          <option value="lister">Lister</option>
+        </select>
+
+        <button type="submit">Register</button>
       </form>
     </div>
   );
 };
 
-export default Login;
+export default Register;

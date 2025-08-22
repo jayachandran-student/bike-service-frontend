@@ -1,28 +1,22 @@
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import React, { useEffect, useState } from 'react';
+import { Bar } from 'react-chartjs-2';
+import axios from 'axios';
 
-const data = [
-  { date: 'July 28', bookings: 2 },
-  { date: 'July 29', bookings: 3 },
-  { date: 'July 30', bookings: 4 },
-  { date: 'July 31', bookings: 1 },
-];
+export default function ChartsDashboard() {
+  const [chartData, setChartData] = useState(null);
 
-const BookingChart = () => {
-  return (
-    <div>
-      <h3>Bookings Overview</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Bar dataKey="bookings" fill="#007bff" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
+  useEffect(() => {
+    axios.get('/reports/bookings-per-day').then(res => {
+      const labels = res.data.map(d => d._id);
+      const data = res.data.map(d => d.count);
+      setChartData({
+        labels,
+        datasets: [{ label: 'Bookings per day', data, backgroundColor: 'rgba(75,192,192,0.6)' }]
+      });
+    });
+  }, []);
 
-export default BookingChart;
+  if (!chartData) return <p>Loading chart...</p>;
+
+  return <Bar data={chartData} />;
+}
