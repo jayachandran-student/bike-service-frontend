@@ -1,52 +1,35 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
+export const AuthContext = createContext(null);
+export const useAuth = ()=> useContext(AuthContext);
 
-const AuthContext = createContext(null);
-export const useAuth = () => useContext(AuthContext);
+const decode = (t)=>{ try{ return t ? JSON.parse(atob(t.split(".")[1])) : null }catch{ return null } };
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [user, setUser] = useState(token ? decode(token) : null);
+  const [loading, setLoading] = useState(true);
 
-  const saveAuth = ({ token, user }) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    setToken(token);
-    setUser(user);
+  useEffect(()=>{ (async ()=>{
+    if (!token) { setUser(null); setLoading(false); return; }
+    setUser(u => u ?? decode(token));
+    try { const { data } = await api.get("/auth/me"); if (data?.user) setUser(data.user); }
+    finally { setLoading(false); }
+  })(); }, [token]);
+
+  const login = async (email,password)=>{
+    try{ const { data } = await api.post("/auth/login",{ email,password });
+      localStorage.setItem("token", data.token); setToken(data.token); setUser(data.user || decode(data.token));
+      return { success:true };
+    }catch(e){ return { success:false, message: e.response?.data?.message || "Login failed" }; }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setToken(null);
-    setUser(null);
+  const register = async ({ name,email,password,role="taker" })=>{
+    try{ await api.post("/auth/register",{ name,email,password,role }); return { success:true }; }
+    catch(e){ return { success:false, message: e.response?.data?.message || "Registration failed" }; }
   };
 
-  const refreshProfile = async () => {
-    if (!token) return;
-    try {
-      const { data } = await api.get("/auth/me");
-      setUser(data.user);
-      localStorage.setItem("user", JSON.stringify(data.user));
-    } catch {
-      logout();
-    }
-  };
+  const logout = ()=>{ localStorage.removeItem("token"); setToken(null); setUser(null); };
 
-  useEffect(() => {
-    if (token && !user) refreshProfile();
-    // eslint-disable-next-line
-  }, [token]);
-
-  return (
-    <AuthContext.Provider
-      value={{ token, user, setUser, setToken, saveAuth, logout, loading, setLoading, refreshProfile }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ token,user,loading,login,register,logout }}>{children}</AuthContext.Provider>;
 };

@@ -1,16 +1,10 @@
-import React, { useContext } from 'react';
-import { Route, Redirect } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-
-export default function ProtectedRoute({ component: Component, ...rest }) {
-  const { user } = useContext(AuthContext);
-
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        user ? <Component {...props} /> : <Redirect to="/login" />
-      }
-    />
-  );
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+export default function ProtectedRoute({ children, role }) {
+  const { user, loading } = useAuth();
+  if (loading) return <p style={{ padding:20 }}>Checking session…</p>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to="/" replace />;
+  return children;
 }

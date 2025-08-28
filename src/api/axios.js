@@ -1,15 +1,9 @@
 import axios from "axios";
-
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL,
+const viteBase = typeof import.meta !== "undefined" ? import.meta.env?.VITE_API_BASE : undefined;
+const craBase  = typeof process !== "undefined" ? process.env?.REACT_APP_API_BASE : undefined;
+const API_BASE = (viteBase || craBase || "http://localhost:5000").replace(/\/+$/,"");
+const api = axios.create({ baseURL: `${API_BASE}/api` });
+api.interceptors.request.use(cfg => {
+  const t = localStorage.getItem("token"); if (t) cfg.headers.Authorization = `Bearer ${t}`; return cfg;
 });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 export default api;

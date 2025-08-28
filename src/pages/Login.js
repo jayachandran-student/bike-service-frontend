@@ -1,70 +1,47 @@
 // src/pages/Login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios"; // ✅ axios instance
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
-  const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      // ✅ axios baseURL = http://localhost:5000/api
-      const res = await api.post("/auth/login", formData);
-
-      // Save JWT token to localStorage
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-      }
-
-      setMessage("Login successful!");
-      setTimeout(() => {
-        navigate("/profile");
-      }, 1500);
-    } catch (err) {
-      setMessage(err.response?.data?.message || "Login failed");
+    setMessage("");
+    const result = await login(email, password);
+    if (result.success) {
+      navigate("/dashboard");
+    } else {
+      setMessage(result.message || "Login failed ❌");
     }
   };
 
   return (
-    <div className="login-container">
+    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
       <h2>Login</h2>
-
-      {message && <p>{message}</p>}
-
+      {message && <p style={{ color: "red" }}>{message}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
-          name="email"
-          placeholder="Enter email"
-          value={formData.email}
-          onChange={handleChange}
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
-
+        <br />
         <input
           type="password"
-          name="password"
-          placeholder="Enter password"
-          value={formData.password}
-          onChange={handleChange}
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
-
+        <br />
         <button type="submit">Login</button>
       </form>
     </div>
