@@ -1,31 +1,35 @@
-# Motorcycle Service Booking – Frontend
+## 📄 Frontend `README.md`
 
-This is the frontend of the Motorcycle Service Booking web application, built using React.js and styled with Bootstrap. It allows users to book bike service appointments and view booking data in a chart.
+````markdown
+# Motorcycle Service Booking - Frontend
 
-## 🚀 Deployed URL
+This is the **frontend React app** for the Motorcycle Service Booking platform.  
+It provides login/register, booking flow, payments (Razorpay), reviews, and analytics dashboards.
 
-🔗 https://whimsical-froyo-e74491.netlify.app
+---
 
-## ⚙️ Tech Stack
+## 🚀 Tech Stack
 
-- React.js
-- Bootstrap
-- Recharts (for charts)
-- Netlify (deployment)
+- React.js (CRA)
+- React Router DOM
+- Context API (Auth)
+- Axios for API requests
+- Chart.js (Analytics)
+- Netlify Hosting
 
-## ✨ Features
+---
 
-- User-friendly booking form
-- Form validation
-- Fetches and submits data to backend API
-- Displays booking trends with bar chart
+## ⚙️ Environment Variables
 
-## 📁 Folder Structure
+Create a `.env` file in frontend root:
 
-## 📸 Screenshot
+```env
+REACT_APP_API_BASE=https://motorcycle-service-booking-backend-5.onrender.com
+REACT_APP_RAZORPAY_KEY_ID=rzp_test_RB9ml3FDulSn8s
 
-![App Screenshot](https://via.placeholder.com/800x400.png?text=Add+a+screenshot+here)
 
 ## 🧠 Author
 
 Jayachandran K
+```
+````
