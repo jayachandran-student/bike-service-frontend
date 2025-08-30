@@ -1,35 +1,82 @@
-## 📄 Frontend `README.md`
+# 🏍️ Motorcycle Service Booking – Frontend
 
-````markdown
-# Motorcycle Service Booking - Frontend
-
-This is the **frontend React app** for the Motorcycle Service Booking platform.  
-It provides login/register, booking flow, payments (Razorpay), reviews, and analytics dashboards.
+This is the **React frontend** for the Motorcycle Service Booking platform.  
+It provides UI for authentication, booking motorcycles, payment checkout, reviews, and analytics.
 
 ---
 
-## 🚀 Tech Stack
+## 🚀 Features
 
-- React.js (CRA)
-- React Router DOM
-- Context API (Auth)
-- Axios for API requests
-- Chart.js (Analytics)
-- Netlify Hosting
+- 🔑 Login & Registration
+- 📊 Role-based Dashboard
+- 🏍️ Browse & Book Motorcycles
+- 💳 Integrated Razorpay Checkout
+- 📅 Manage My Bookings
+- ⭐ Leave & View Reviews
+- 📈 Analytics with Charts.js
+- 🌐 Deployed on Netlify
 
 ---
 
-## ⚙️ Environment Variables
+## 🛠️ Tech Stack
 
-Create a `.env` file in frontend root:
+- React (CRA)
+- React Router
+- Context API for Auth
+- Axios (with interceptor)
+- Chart.js
+- Razorpay Checkout.js
 
-```env
+---
+
+## ⚙️ Setup
+
+### 1️⃣ Clone the repo
+
+```bash
+git clone https://github.com/jayachandran-student/bike-service-frontend.git
+cd bike-service-frontend
+2️⃣ Install dependencies
+bash
+Copy code
+npm install
+3️⃣ Create .env file
+env
+Copy code
 REACT_APP_API_BASE=https://motorcycle-service-booking-backend-5.onrender.com
 REACT_APP_RAZORPAY_KEY_ID=rzp_test_RB9ml3FDulSn8s
 
 
-## 🧠 Author
+4️⃣ Run locally
+npm start
 
-Jayachandran K
+
+Frontend will start at: http://localhost:3000
+
+🌐 Deployment
+
+Netlify: https://motorcyclebook.netlify.app
+
+🔐 Test Login
+
+You can register a new account or use a seeded one:
+
+Role: Taker → can book
+
+Role: Lister → can add motorcycles
+
+🧪 Test Razorpay
+
+Use Razorpay test card:
+
+Card No: 4111 1111 1111 1111
+
+Expiry: Any future date
+
+CVV: 123
+
+👨‍💻 Author
+
+Developed by Jayachandran K
+📧 Contact: jayachandran.k30@gmail.com
 ```
-````
