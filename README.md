@@ -33,7 +33,6 @@ It provides UI for authentication, booking motorcycles, payment checkout, review
 
 ### 1️⃣ Clone the repo
 
-```bash
 git clone https://github.com/jayachandran-student/bike-service-frontend.git
 cd bike-service-frontend
 2️⃣ Install dependencies
@@ -46,10 +45,8 @@ Copy code
 REACT_APP_API_BASE=https://motorcycle-service-booking-backend-5.onrender.com
 REACT_APP_RAZORPAY_KEY_ID=rzp_test_RB9ml3FDulSn8s
 
-
 4️⃣ Run locally
 npm start
-
 
 Frontend will start at: http://localhost:3000
 
@@ -79,4 +76,7 @@ CVV: 123
 
 Developed by Jayachandran K
 📧 Contact: jayachandran.k30@gmail.com
+
+```
+
 ```
