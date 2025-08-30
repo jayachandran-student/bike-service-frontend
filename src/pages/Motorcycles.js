@@ -1,4 +1,3 @@
-// src/pages/Motorcycles.js
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
 

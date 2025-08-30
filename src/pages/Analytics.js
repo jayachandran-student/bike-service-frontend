@@ -1,4 +1,3 @@
-// src/pages/Analytics.js
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 import api from "../api/axios";

@@ -1,7 +1,6 @@
-// src/pages/MyBookings.js
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
-import { useToast } from "../context/ToastContext"; // ⭐ add
+import { useToast } from "../context/ToastContext"; 
 
 function StatusBadge({ status }) {
   const styles = {

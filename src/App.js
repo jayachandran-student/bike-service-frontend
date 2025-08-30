@@ -10,7 +10,7 @@ import Analytics from "./pages/Analytics";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
-import { ToastProvider } from "./context/ToastContext"; // ⭐ add
+import { ToastProvider } from "./context/ToastContext"; 
 
 function App() {
   return (
