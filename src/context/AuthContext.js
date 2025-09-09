@@ -1,9 +1,9 @@
+// src/context/AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
-
 
 const decodeJwt = (t) => {
   try {
@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  // on mount, ensure api header and optionally refresh user
+  // run once on mount: set axios header and try to refresh user
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     (async () => {
       try {
@@ -56,7 +57,6 @@ export const AuthProvider = ({ children }) => {
     })();
   }, []); // run once
 
-  
   const login = async (email, password) => {
     try {
       const res = await api.post("/auth/login", { email, password });
@@ -95,13 +95,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  
   const logout = async () => {
     try {
-      
-      
+      // optional: call backend logout endpoint if you have one
+      // await api.post('/auth/logout');
     } catch (e) {
-      
+      // ignore
     }
     try { localStorage.removeItem("token"); } catch {}
     try { localStorage.removeItem("user"); } catch {}
