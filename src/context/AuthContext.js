@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     })();
-  }, [user]); // <-- dependency added
+  }, [user]); 
 
   const login = async (email, password) => {
     try {
