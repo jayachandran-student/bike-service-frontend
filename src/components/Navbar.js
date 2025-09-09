@@ -2,7 +2,7 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import api from "../api/axios"; // ensure this path matches your project
+import api from "../api/axios";
 
 function Avatar({ name }) {
   const ch = (name || "U").trim().charAt(0).toUpperCase();
@@ -59,7 +59,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       console.log("Logout clicked (Navbar)");
-      // call context logout if present
+      // call context logout if available and await possible promise
       if (typeof logout === "function") {
         const maybePromise = logout();
         if (maybePromise && typeof maybePromise.then === "function") {
@@ -67,52 +67,53 @@ export default function Navbar() {
         }
       }
 
-      // ensure localStorage cleared
+      // remove keys & header (double-safeguard)
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        console.log("localStorage keys removed");
+        console.log("localStorage cleared");
       } catch (e) {
         console.warn("localStorage remove error:", e);
       }
-
-      // clear axios instance auth header (safe-guard)
       try {
         if (api && api.defaults && api.defaults.headers) {
           delete api.defaults.headers.common["Authorization"];
-          console.log("api default Authorization header deleted");
+          console.log("axios Authorization header removed");
         }
       } catch (e) {
-        console.warn("error clearing api header", e);
+        console.warn("error clearing axios header", e);
       }
 
-      // navigate using react-router
+      // navigate
       navigate("/login");
-
-      // fallback hard redirect if router navigation doesn't change location
+      // fallback hard redirect if navigation didn't change location
       setTimeout(() => {
         if (window.location.pathname !== "/login") {
-          console.log("Fallback redirect to /login");
           window.location.href = "/login";
         }
       }, 300);
     } catch (err) {
-      console.error("Logout handler failed:", err);
+      console.error("Logout failed:", err);
       try { localStorage.removeItem("token"); } catch {}
       window.location.href = "/login";
     }
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <nav
+      className="navbar navbar-expand-lg shadow-sm sticky-top"
+      style={{ background: "#ffffff", borderBottom: "1px solid #e9ecef" }}
+    >
       <div className="container">
         {/* Brand */}
-        <NavLink className="navbar-brand fw-bold" to="/">
+        <NavLink className="navbar-brand fw-bold text-dark" to="/">
           Moto Service
         </NavLink>
+
+        {/* small role chip next to brand */}
         {user && <RoleChip role={user.role} />}
 
-        {/* Hamburger toggler */}
+        {/* toggler */}
         <button
           className="navbar-toggler"
           type="button"
@@ -127,71 +128,64 @@ export default function Navbar() {
 
         {/* Links */}
         <div className="collapse navbar-collapse" id="navbarsExample">
-          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+          <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
             {!user ? (
               <>
                 <li className="nav-item">
-                  <NavLink to="/login" className="nav-link">
-                    Login
-                  </NavLink>
+                  <NavLink to="/login" className="nav-link text-dark">Login</NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink to="/register" className="nav-link">
-                    Register
-                  </NavLink>
+                  <NavLink to="/register" className="nav-link text-dark">Register</NavLink>
                 </li>
               </>
             ) : (
               <>
                 <li className="nav-item">
-                  <NavLink to="/dashboard" className="nav-link">
-                    Dashboard
-                  </NavLink>
+                  <NavLink to="/dashboard" className="nav-link text-dark">Dashboard</NavLink>
                 </li>
 
                 {user.role === "taker" && (
                   <>
                     <li className="nav-item">
-                      <NavLink to="/book" className="nav-link">
-                        Book
-                      </NavLink>
+                      <NavLink to="/book" className="nav-link text-dark">Book</NavLink>
                     </li>
                     <li className="nav-item">
-                      <NavLink to="/my-bookings" className="nav-link">
-                        My Bookings
-                      </NavLink>
+                      <NavLink to="/my-bookings" className="nav-link text-dark">My Bookings</NavLink>
                     </li>
                   </>
                 )}
 
                 {user.role === "lister" && (
                   <li className="nav-item">
-                    <NavLink to="/lister/motorcycles" className="nav-link">
-                      My Motorcycles
-                    </NavLink>
+                    <NavLink to="/lister/motorcycles" className="nav-link text-dark">My Motorcycles</NavLink>
                   </li>
                 )}
 
                 <li className="nav-item">
-                  <NavLink to="/analytics" className="nav-link">
-                    Analytics
-                  </NavLink>
-                </li>
-
-                {/* Profile + logout */}
-                <li className="nav-item d-flex align-items-center ms-lg-3">
-                  <Avatar name={user.name} />
-                  <span className="ms-2 text-white small">{user.name}</span>
-                  <button
-                    className="btn btn-outline-light btn-sm ms-3"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </button>
+                  <NavLink to="/analytics" className="nav-link text-dark">Analytics</NavLink>
                 </li>
               </>
             )}
           </ul>
+        </div>
+
+        {/* Right: always-visible profile + logout (outside collapse so visible on small screens) */}
+        <div className="d-flex align-items-center ms-3">
+          {user ? (
+            <>
+              <div className="d-flex align-items-center">
+                <Avatar name={user.name} />
+                <span className="ms-2 text-dark small d-none d-lg-inline">{user.name}</span>
+              </div>
+              <button
+                className="btn btn-outline-secondary btn-sm ms-3"
+                onClick={handleLogout}
+                aria-label="Logout"
+              >
+                Logout
+              </button>
+            </>
+          ) : null}
         </div>
       </div>
     </nav>
