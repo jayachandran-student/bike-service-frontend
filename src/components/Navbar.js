@@ -9,8 +9,8 @@ function Avatar({ name }) {
       aria-label="profile"
       title={name || "User"}
       style={{
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
         borderRadius: "50%",
         background: "#0d6efd",
         color: "#fff",
@@ -35,11 +35,9 @@ function RoleChip({ role }) {
   const c = colors[role] || { bg: "#f1f3f5", fg: "#495057", bd: "#dee2e6" };
   return (
     <span
+      className="ms-2 px-2 py-1 rounded-pill border"
       style={{
-        marginLeft: 8,
-        padding: "2px 8px",
-        borderRadius: 999,
-        border: `1px solid ${c.bd}`,
+        borderColor: c.bd,
         background: c.bg,
         color: c.fg,
         fontSize: 12,
@@ -56,114 +54,101 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // one-time lightweight styles for nav links
-  if (typeof document !== "undefined" && !document.getElementById("navlink-style")) {
-    const s = document.createElement("style");
-    s.id = "navlink-style";
-    s.innerHTML = `
-      .nav-link {
-        color: #ffffff;
-        opacity: .85;
-        text-decoration: none;
-        padding: 6px 10px;
-        border-radius: 8px;
-        transition: background .15s ease, opacity .15s ease;
-      }
-      .nav-link:hover { opacity: 1; background: rgba(255,255,255,.12); }
-      .nav-link.active {
-        opacity: 1;
-        background: rgba(255,255,255,.18);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
-      }
-      .nav-btn {
-        background: transparent;
-        border: 1px solid rgba(255,255,255,.6);
-        color: white;
-        padding: 6px 10px;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .nav-btn:hover { background: rgba(255,255,255,.12); }
-    `;
-    document.head.appendChild(s);
-  }
-
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 16px",
-        backgroundColor: "#0d6efd",
-        color: "white",
-        gap: 12,
-        flexWrap: "wrap",
-      }}
-    >
-      {/* Left: Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontWeight: 800, letterSpacing: .3 }}>Moto Service</span>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+      <div className="container">
+        {/* Brand */}
+        <NavLink className="navbar-brand fw-bold" to="/">
+          Moto Service
+        </NavLink>
         {user && <RoleChip role={user.role} />}
-      </div>
 
-      {/* Center: Nav links */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        {!user ? (
-          <>
-            <NavLink to="/login" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-              Login
-            </NavLink>
-            <NavLink to="/register" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-              Register
-            </NavLink>
-          </>
-        ) : (
-          <>
-            <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-              Dashboard
-            </NavLink>
+        {/* Hamburger toggler */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarsExample"
+          aria-controls="navbarsExample"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-            {user.role === "taker" && (
+        {/* Links */}
+        <div className="collapse navbar-collapse" id="navbarsExample">
+          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+            {!user ? (
               <>
-                <NavLink to="/book" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-                  Book
-                </NavLink>
-                <NavLink to="/my-bookings" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-                  My Bookings
-                </NavLink>
+                <li className="nav-item">
+                  <NavLink to="/login" className="nav-link">
+                    Login
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink to="/register" className="nav-link">
+                    Register
+                  </NavLink>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <NavLink to="/dashboard" className="nav-link">
+                    Dashboard
+                  </NavLink>
+                </li>
+
+                {user.role === "taker" && (
+                  <>
+                    <li className="nav-item">
+                      <NavLink to="/book" className="nav-link">
+                        Book
+                      </NavLink>
+                    </li>
+                    <li className="nav-item">
+                      <NavLink to="/my-bookings" className="nav-link">
+                        My Bookings
+                      </NavLink>
+                    </li>
+                  </>
+                )}
+
+                {user.role === "lister" && (
+                  <li className="nav-item">
+                    <NavLink to="/lister/motorcycles" className="nav-link">
+                      My Motorcycles
+                    </NavLink>
+                  </li>
+                )}
+
+                <li className="nav-item">
+                  <NavLink to="/analytics" className="nav-link">
+                    Analytics
+                  </NavLink>
+                </li>
+
+                {/* Profile + logout */}
+                <li className="nav-item d-flex align-items-center ms-lg-3">
+                  <Avatar name={user.name} />
+                  <span className="ms-2 text-white small">{user.name}</span>
+                  <button
+                    className="btn btn-outline-light btn-sm ms-3"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </li>
               </>
             )}
-
-            {user.role === "lister" && (
-              <NavLink to="/lister/motorcycles" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-                My Motorcycles
-              </NavLink>
-            )}
-
-            <NavLink to="/analytics" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-              Analytics
-            </NavLink>
-          </>
-        )}
-      </div>
-
-      {/* Right: Profile / logout */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {user && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Avatar name={user.name} />
-              <span style={{ fontSize: 13, opacity: .95 }}>{user.name}</span>
-            </div>
-            <button className="nav-btn" onClick={handleLogout}>Logout</button>
-          </>
-        )}
+          </ul>
+        </div>
       </div>
     </nav>
   );
