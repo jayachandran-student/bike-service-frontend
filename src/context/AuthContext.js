@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     })();
-  }, []); // run once
+  }, [user]); // run once
 
   const login = async (email, password) => {
     try {
