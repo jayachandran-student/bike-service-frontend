@@ -1,6 +1,8 @@
+// src/components/Navbar.js
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios"; // ensure this path matches your project
 
 function Avatar({ name }) {
   const ch = (name || "U").trim().charAt(0).toUpperCase();
@@ -54,9 +56,51 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      console.log("Logout clicked (Navbar)");
+      // call context logout if present
+      if (typeof logout === "function") {
+        const maybePromise = logout();
+        if (maybePromise && typeof maybePromise.then === "function") {
+          await maybePromise;
+        }
+      }
+
+      // ensure localStorage cleared
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        console.log("localStorage keys removed");
+      } catch (e) {
+        console.warn("localStorage remove error:", e);
+      }
+
+      // clear axios instance auth header (safe-guard)
+      try {
+        if (api && api.defaults && api.defaults.headers) {
+          delete api.defaults.headers.common["Authorization"];
+          console.log("api default Authorization header deleted");
+        }
+      } catch (e) {
+        console.warn("error clearing api header", e);
+      }
+
+      // navigate using react-router
+      navigate("/login");
+
+      // fallback hard redirect if router navigation doesn't change location
+      setTimeout(() => {
+        if (window.location.pathname !== "/login") {
+          console.log("Fallback redirect to /login");
+          window.location.href = "/login";
+        }
+      }, 300);
+    } catch (err) {
+      console.error("Logout handler failed:", err);
+      try { localStorage.removeItem("token"); } catch {}
+      window.location.href = "/login";
+    }
   };
 
   return (

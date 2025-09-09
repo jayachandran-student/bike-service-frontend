@@ -1,35 +1,119 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
-export const AuthContext = createContext(null);
-export const useAuth = ()=> useContext(AuthContext);
 
-const decode = (t)=>{ try{ return t ? JSON.parse(atob(t.split(".")[1])) : null }catch{ return null } };
+const AuthContext = createContext(null);
+export const useAuth = () => useContext(AuthContext);
+
+
+const decodeJwt = (t) => {
+  try {
+    if (!t) return null;
+    const payload = t.split?.(".")[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("token"));
-  const [user, setUser] = useState(token ? decode(token) : null);
+  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+  const [user, setUser] = useState(() => {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      try { return JSON.parse(raw); } catch { return decodeJwt(localStorage.getItem("token")); }
+    }
+    return decodeJwt(localStorage.getItem("token"));
+  });
   const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{ (async ()=>{
-    if (!token) { setUser(null); setLoading(false); return; }
-    setUser(u => u ?? decode(token));
-    try { const { data } = await api.get("/auth/me"); if (data?.user) setUser(data.user); }
-    finally { setLoading(false); }
-  })(); }, [token]);
+  // on mount, ensure api header and optionally refresh user
+  useEffect(() => {
+    (async () => {
+      try {
+        const t = localStorage.getItem("token");
+        if (t) {
+          // set axios header for future requests
+          try { api.defaults.headers.common["Authorization"] = `Bearer ${t}`; } catch {}
+        }
+        // if user isn't loaded and we have token, attempt to fetch /auth/me
+        if (!user && t) {
+          try {
+            const { data } = await api.get("/auth/me");
+            if (data?.user) {
+              setUser(data.user);
+              localStorage.setItem("user", JSON.stringify(data.user));
+            }
+          } catch (e) {
+            // ignore: may be expired token
+            console.warn("Could not fetch /auth/me:", e?.message || e);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []); // run once
 
-  const login = async (email,password)=>{
-    try{ const { data } = await api.post("/auth/login",{ email,password });
-      localStorage.setItem("token", data.token); setToken(data.token); setUser(data.user || decode(data.token));
-      return { success:true };
-    }catch(e){ return { success:false, message: e.response?.data?.message || "Login failed" }; }
+  
+  const login = async (email, password) => {
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      const data = res?.data || {};
+      const t = data.token || data.accessToken || null;
+      const u = data.user || data.userData || null;
+
+      if (!t) {
+        return { success: false, message: "Authentication token not provided by server" };
+      }
+
+      // persist
+      localStorage.setItem("token", t);
+      if (u) localStorage.setItem("user", JSON.stringify(u));
+
+      // set axios header
+      try { api.defaults.headers.common["Authorization"] = `Bearer ${t}`; } catch (e) {}
+
+      setToken(t);
+      setUser(u || decodeJwt(t));
+      return { success: true, user: u || decodeJwt(t) };
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || "Login failed";
+      return { success: false, message };
+    }
   };
 
-  const register = async ({ name,email,password,role="taker" })=>{
-    try{ await api.post("/auth/register",{ name,email,password,role }); return { success:true }; }
-    catch(e){ return { success:false, message: e.response?.data?.message || "Registration failed" }; }
+  // register
+  const register = async (formData) => {
+    try {
+      const res = await api.post("/auth/register", formData);
+      return { success: true, data: res.data };
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || "Registration failed";
+      return { success: false, message };
+    }
   };
 
-  const logout = ()=>{ localStorage.removeItem("token"); setToken(null); setUser(null); };
+  
+  const logout = async () => {
+    try {
+      
+      
+    } catch (e) {
+      
+    }
+    try { localStorage.removeItem("token"); } catch {}
+    try { localStorage.removeItem("user"); } catch {}
+    try { delete api.defaults.headers.common["Authorization"]; } catch {}
+    setToken(null);
+    setUser(null);
+    return true;
+  };
 
-  return <AuthContext.Provider value={{ token,user,loading,login,register,logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ token, user, loading, login, register, logout, setUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
