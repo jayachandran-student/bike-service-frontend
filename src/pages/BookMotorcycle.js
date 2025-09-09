@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
-import { useToast } from "../context/ToastContext"; 
+import { useToast } from "../context/ToastContext";
 
 const INR = (n) =>
   new Intl.NumberFormat("en-IN", {
@@ -11,7 +11,7 @@ const INR = (n) =>
   }).format(n || 0);
 
 export default function BookMotorcycle() {
-  const toast = useToast(); // ⭐
+  const toast = useToast();
   const [searchParams] = useSearchParams();
 
   const [list, setList] = useState([]);
@@ -95,11 +95,11 @@ export default function BookMotorcycle() {
 
   const onEndChange = (end) => {
     if (!form.startDate) {
-      toast.info("Please choose a start date first."); // ⭐
+      toast.info("Please choose a start date first.");
       return;
     }
     if (end < form.startDate) {
-      toast.error("End date cannot be before start date."); // ⭐
+      toast.error("End date cannot be before start date.");
       return;
     }
     setForm((f) => ({ ...f, endDate: end }));
@@ -109,11 +109,11 @@ export default function BookMotorcycle() {
     e.preventDefault();
     try {
       if (!form.motorcycleId || !form.startDate || !form.endDate) {
-        toast.info("Please complete the form."); // ⭐
+        toast.info("Please complete the form.");
         return;
       }
       if (!form.totalPrice || form.totalPrice <= 0) {
-        toast.error("Please choose valid dates."); // ⭐
+        toast.error("Please choose valid dates.");
         return;
       }
 
@@ -127,114 +127,117 @@ export default function BookMotorcycle() {
         orderId: order.id,
       });
 
-      toast.success("Booking created. Redirecting to payment…", 1800); // ⭐
+      toast.success("Booking created. Redirecting to payment…", 1800);
       setTimeout(() => {
         window.location.href = `/checkout?orderId=${order.id}&bookingId=${booking._id}`;
       }, 900);
     } catch (err) {
       const msg = err?.response?.data?.message || err.message || "Something went wrong";
-      toast.error(msg); // ⭐
+      toast.error(msg);
     }
   };
 
   const picked = list.find((m) => m._id === form.motorcycleId);
 
   return (
-    <div style={{ maxWidth: 560, margin: "20px auto" }}>
-      <h2>Book a Motorcycle</h2>
+    <div className="container d-flex justify-content-center">
+      <div className="card shadow-lg p-4 mt-4" style={{ maxWidth: 600, width: "100%" }}>
+        <h3 className="mb-3 text-center">Book a Motorcycle</h3>
 
-      {loadingList && <p>Loading motorcycles…</p>}
+        {loadingList && <p>Loading motorcycles…</p>}
 
-      {!loadingList && (
-        <form onSubmit={submit}>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Motorcycle
-            <select
-              value={form.motorcycleId}
-              onChange={(e) => setForm({ ...form, motorcycleId: e.target.value })}
-              required
-              style={{ display: "block", marginTop: 6, width: "100%" }}
-            >
-              <option value="">Select motorcycle</option>
-              {list.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {m.make} {m.model} — {INR(m.pricePerDay)}/day
-                </option>
-              ))}
-            </select>
-          </label>
+        {!loadingList && (
+          <form onSubmit={submit}>
+            {/* Motorcycle select */}
+            <div className="mb-3">
+              <label className="form-label">Motorcycle</label>
+              <select
+                className="form-select"
+                value={form.motorcycleId}
+                onChange={(e) => setForm({ ...form, motorcycleId: e.target.value })}
+                required
+              >
+                <option value="">Select motorcycle</option>
+                {list.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {m.make} {m.model} — {INR(m.pricePerDay)}/day
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {form.motorcycleId && (
-            <div
-              style={{
-                margin: "12px 0",
-                padding: 10,
-                border: "1px solid #eee",
-                borderRadius: 8,
-                background: "#fafafa",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <strong>Recent reviews</strong>
-                <span style={{ color: "#555", fontSize: 14 }}>
-                  {summary.count > 0 ? `⭐ ${summary.avg} (${summary.count})` : "No ratings yet"}
-                </span>
+            {/* Reviews section */}
+            {form.motorcycleId && (
+              <div className="mb-3 p-3 border rounded bg-light">
+                <div className="d-flex justify-content-between align-items-center">
+                  <strong>Recent reviews</strong>
+                  <span className="text-muted small">
+                    {summary.count > 0 ? `⭐ ${summary.avg} (${summary.count})` : "No ratings yet"}
+                  </span>
+                </div>
+                {reviews.length === 0 ? (
+                  <p className="text-muted small mb-0">
+                    No reviews yet — be the first after booking!
+                  </p>
+                ) : (
+                  <ul className="mb-0">
+                    {reviews.slice(0, 3).map((rv) => (
+                      <li key={rv._id} className="small">
+                        ⭐ {rv.rating}/5 — {rv.comment}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+            )}
 
-              {reviews.length === 0 ? (
-                <div style={{ color: "#666" }}>No reviews yet — be the first after booking!</div>
-              ) : (
-                <ul style={{ margin: 8, paddingLeft: 18 }}>
-                  {reviews.slice(0, 3).map((rv) => (
-                    <li key={rv._id} style={{ marginBottom: 6 }}>
-                      ⭐ {rv.rating}/5 — {rv.comment}
-                    </li>
-                  ))}
-                </ul>
+            {/* Date pickers */}
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">Start date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.startDate}
+                  onChange={(e) => onStartChange(e.target.value)}
+                  required
+                  min={todayStr}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label">End date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.endDate}
+                  onChange={(e) => onEndChange(e.target.value)}
+                  required
+                  min={form.startDate || todayStr}
+                />
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="mb-3">
+              <strong>Total:</strong> {INR(form.totalPrice)}
+              {picked && form.startDate && form.endDate && (
+                <span className="text-muted ms-2">
+                  ({INR(picked.pricePerDay)}/day)
+                </span>
               )}
             </div>
-          )}
 
-          <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-            <label>
-              Start date
-              <input
-                type="date"
-                value={form.startDate}
-                onChange={(e) => onStartChange(e.target.value)}
-                required
-                min={todayStr}
-                style={{ display: "block", marginTop: 6, width: "100%" }}
-              />
-            </label>
-
-            <label>
-              End date
-              <input
-                type="date"
-                value={form.endDate}
-                onChange={(e) => onEndChange(e.target.value)}
-                required
-                min={form.startDate || todayStr}
-                style={{ display: "block", marginTop: 6, width: "100%" }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginTop: 12, marginBottom: 12 }}>
-            <strong>Total:</strong> {INR(form.totalPrice)}
-            {picked && form.startDate && form.endDate && (
-              <span style={{ color: "#666", marginLeft: 8 }}>
-                ({INR(picked.pricePerDay)}/day)
-              </span>
-            )}
-          </div>
-
-          <button disabled={!form.motorcycleId || !form.startDate || !form.endDate}>
-            Proceed to Pay
-          </button>
-        </form>
-      )}
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={!form.motorcycleId || !form.startDate || !form.endDate}
+            >
+              Proceed to Pay
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
