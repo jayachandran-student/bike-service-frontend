@@ -178,7 +178,7 @@ export default function Navbar() {
                 <span className="ms-2 text-dark small d-none d-lg-inline">{user.name}</span>
               </div>
               <button
-                className="btn btn-outline-secondary btn-sm ms-3"
+                className="btn btn-primary btn-sm ms-3"
                 onClick={handleLogout}
                 aria-label="Logout"
               >
