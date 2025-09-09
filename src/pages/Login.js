@@ -1,13 +1,18 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+
+  // Redirect already-authenticated users to dashboard
+  useEffect(() => {
+    if (user) navigate("/dashboard");
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,6 +65,12 @@ const Login = () => {
           <button type="submit" className="btn btn-primary w-100">
             Login
           </button>
+
+          <div className="mt-3 text-center">
+            <small>
+              Don't have an account? <Link to="/register">Register</Link>
+            </small>
+          </div>
         </form>
       </div>
     </div>

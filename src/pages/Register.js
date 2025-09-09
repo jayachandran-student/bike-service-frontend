@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Register() {
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,6 +13,11 @@ function Register() {
 
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+
+  // Redirect already-authenticated users to dashboard
+  useEffect(() => {
+    if (user) navigate("/dashboard");
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -97,6 +102,12 @@ function Register() {
           <button type="submit" className="btn btn-success w-100">
             Register
           </button>
+
+          <div className="mt-3 text-center">
+            <small>
+              Already have an account? <Link to="/login">Login</Link>
+            </small>
+          </div>
         </form>
       </div>
     </div>
