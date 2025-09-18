@@ -9,19 +9,11 @@ const INR = (n) =>
     maximumFractionDigits: 0,
   }).format(n || 0);
 
-/**
- * My Motorcycles (Lister view)
- * Uses:
- *  - GET /auth/me
- *  - GET /vehicles/mine
- *  - POST /vehicles
- *  - DELETE /vehicles/:id
- */
+
 export default function Motorcycles() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [me, setMe] = useState(null);
   const [err, setErr] = useState("");
 
   const [form, setForm] = useState({
@@ -46,9 +38,9 @@ export default function Motorcycles() {
     setLoading(true);
     setErr("");
     try {
-      // fetch current profile (defensive)
+      // fetch current profile (defensive). We only use it here as `prof`,
+      // no need to keep it in component state since it's not used elsewhere.
       const prof = await api.get("/auth/me").then((r) => r.data).catch(() => null);
-      setMe(prof);
 
       // fetch vehicles for this lister
       const list = await api.get("/vehicles/mine").then((r) => (Array.isArray(r.data) ? r.data : []));

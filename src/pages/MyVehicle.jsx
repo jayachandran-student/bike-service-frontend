@@ -5,15 +5,13 @@ import { Link } from "react-router-dom";
 
 export default function MyVehicle() {
   const [vehicles, setVehicles] = useState([]);
-  const [me, setMe] = useState(null);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        // fetch current profile
+        // fetch current profile (local var)
         const profile = await api.get("/auth/me").then(r => r.data).catch(() => null);
-        setMe(profile);
 
         // fetch my vehicles (server should return only my vehicles, but we filter defensively)
         const list = await api.get("/vehicles/mine").then(r => r.data || []);
