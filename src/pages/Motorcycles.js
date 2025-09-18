@@ -1,3 +1,4 @@
+// src/pages/Motorcycles.js
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
 
@@ -8,10 +9,20 @@ const INR = (n) =>
     maximumFractionDigits: 0,
   }).format(n || 0);
 
+/**
+ * My Motorcycles (Lister view)
+ * Uses:
+ *  - GET /auth/me
+ *  - GET /vehicles/mine
+ *  - POST /vehicles
+ *  - DELETE /vehicles/:id
+ */
 export default function Motorcycles() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [me, setMe] = useState(null);
+  const [err, setErr] = useState("");
 
   const [form, setForm] = useState({
     make: "",
@@ -33,10 +44,28 @@ export default function Motorcycles() {
 
   const load = async () => {
     setLoading(true);
+    setErr("");
     try {
-      const { data } = await api.get("/motorcycles");
-      // newest first (optional)
-      setRows((Array.isArray(data) ? data : []).slice().reverse());
+      // fetch current profile (defensive)
+      const prof = await api.get("/auth/me").then((r) => r.data).catch(() => null);
+      setMe(prof);
+
+      // fetch vehicles for this lister
+      const list = await api.get("/vehicles/mine").then((r) => (Array.isArray(r.data) ? r.data : []));
+
+      // defensive filter: ensure only vehicles owned by this user are shown
+      const safe = prof && prof.id
+        ? list.filter((v) => {
+            const ownerId = v.owner?._id || v.owner || v.ownerId;
+            return ownerId && ownerId.toString() === prof.id.toString();
+          })
+        : list;
+
+      // newest first
+      setRows(safe.slice().reverse());
+    } catch (e) {
+      console.error("Load my vehicles error:", e);
+      setErr(e?.response?.data?.message || "Failed to load motorcycles");
     } finally {
       setLoading(false);
     }
@@ -44,6 +73,7 @@ export default function Motorcycles() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onAdd = async (e) => {
@@ -51,24 +81,32 @@ export default function Motorcycles() {
     if (!canSubmit || saving) return;
     setSaving(true);
 
-    // optimistic row
+    // optimistic row — map to Vehicle shape minimally
     const optimistic = {
       _id: "tmp-" + Date.now(),
-      ...form,
-      pricePerDay: Number(form.pricePerDay),
+      title: form.make, // using "make" as title/service name
+      brand: form.model,
+      model: form.model,
+      regNumber: form.regNumber,
+      rentPerDay: Number(form.pricePerDay),
       __optimistic: true,
     };
     setRows((r) => [optimistic, ...r]);
 
     try {
-      const { data } = await api.post("/motorcycles", {
-        make: form.make.trim(),
+      const payload = {
+        title: form.make.trim(),
+        brand: form.model.trim(),
         model: form.model.trim(),
-        regNumber: form.regNumber.trim(),
-        pricePerDay: Number(form.pricePerDay),
-      });
+        // optional: include regNumber in description (or add a regNumber field server-side)
+        description: `Reg: ${form.regNumber.trim()}`,
+        rentPerDay: Number(form.pricePerDay),
+        images: [], // optional
+      };
 
-      // replace optimistic row with real one
+      const { data } = await api.post("/vehicles", payload);
+
+      // replace optimistic row with real one (if created)
       setRows((r) => [data, ...r.filter((x) => x._id !== optimistic._id)]);
       setForm({ make: "", model: "", regNumber: "", pricePerDay: "" });
       alert("Added ✅");
@@ -89,7 +127,7 @@ export default function Motorcycles() {
     setRows((r) => r.filter((x) => x._id !== id));
 
     try {
-      await api.delete(`/motorcycles/${id}`);
+      await api.delete(`/vehicles/${id}`);
       alert("Deleted ✅");
     } catch (e) {
       // rollback
@@ -221,12 +259,10 @@ export default function Motorcycles() {
             <tbody>
               {rows.map((m) => (
                 <tr key={m._id} style={{ borderBottom: "1px solid #f7f7f7" }}>
-                  <td style={{ padding: 12 }}>{m.make}</td>
-                  <td style={{ padding: 12 }}>{m.model}</td>
-                  <td style={{ padding: 12, whiteSpace: "nowrap" }}>
-                    {m.regNumber || "—"}
-                  </td>
-                  <td style={{ padding: 12 }}>{INR(m.pricePerDay)}</td>
+                  <td style={{ padding: 12 }}>{m.title || m.make}</td>
+                  <td style={{ padding: 12 }}>{m.model || m.brand || "-"}</td>
+                  <td style={{ padding: 12, whiteSpace: "nowrap" }}>{m.regNumber || (m.description?.startsWith("Reg:") ? m.description.slice(4).trim() : "—")}</td>
+                  <td style={{ padding: 12 }}>{INR(m.rentPerDay || m.pricePerDay)}</td>
                   <td style={{ padding: 12 }}>
                     <button
                       onClick={() => onDelete(m._id)}
@@ -250,6 +286,7 @@ export default function Motorcycles() {
           </table>
         </div>
       )}
+      {err && <div style={{ color: "red", marginTop: 12 }}>{err}</div>}
     </div>
   );
 }

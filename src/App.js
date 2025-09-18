@@ -10,7 +10,12 @@ import Analytics from "./pages/Analytics";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
-import { ToastProvider } from "./context/ToastContext"; 
+import { ToastProvider } from "./context/ToastContext";
+
+// new pages we added
+import VehicleDetails from "./pages/VehicleDetails";
+import MyVehicle from "./pages/MyVehicle";    
+import AddVehicle from "./pages/AddVehicle";
 
 function App() {
   return (
@@ -23,6 +28,9 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* public vehicle details (single page) */}
+            <Route path="/vehicle/:id" element={<VehicleDetails />} />
 
             {/* protected – common */}
             <Route
@@ -74,6 +82,24 @@ function App() {
               element={
                 <ProtectedRoute role="lister">
                   <Motorcycles />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* new lister routes (note: using MyVehicle filename) */}
+            <Route
+              path="/my-vehicles"
+              element={
+                <ProtectedRoute role="lister">
+                  <MyVehicle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-vehicle"
+              element={
+                <ProtectedRoute role="lister">
+                  <AddVehicle />
                 </ProtectedRoute>
               }
             />
