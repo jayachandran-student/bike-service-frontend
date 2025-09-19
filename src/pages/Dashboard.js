@@ -52,7 +52,7 @@ function Sparkline({ data = [], stroke = "#0d6efd" }) {
   );
 }
 
-function StatCard({ title, value, sub, children, bg = "bg-white" }) {
+function StatCard({ title, value, sub, children }) {
   return (
     <div className="card shadow-sm h-100">
       <div className="card-body d-flex flex-column">
@@ -76,32 +76,72 @@ export default function Dashboard() {
   const [myBikes, setMyBikes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // centralised loader that can be called on mount and when vehicles change
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+
+    const loadDashboard = async () => {
+      if (!mounted) return;
       setLoading(true);
       try {
         if (user?.role === "taker") {
           const { data } = await api.get("/bookings/mine");
-          setMyBookings(Array.isArray(data) ? data : []);
+          if (mounted) setMyBookings(Array.isArray(data) ? data : []);
         } else if (user?.role === "lister") {
-          const [{ data: bookings }, { data: bikes }] = await Promise.all([
+          // fetch bookings for my vehicles and vehicles themselves
+          const [{ data: bookings }, vehiclesResp] = await Promise.allSettled([
             api.get("/bookings/for-my-vehicles"),
-            api.get("/motorcycles"),
+            api.get("/vehicles/mine"),
           ]);
-          const owned = (bikes || []).filter((b) => {
-            const ownerId = b?.owner?._id || b?.owner || "";
-            const me = user?._id || user?.id;
-            return ownerId && me ? String(ownerId) === String(me) : true;
+
+          const bookingData = bookings?.status === "fulfilled" ? (Array.isArray(bookings.value.data) ? bookings.value.data : []) : [];
+          let vehicles = [];
+
+          // vehiclesResp might be fulfilled or rejected; if rejected, fallback to public /vehicles
+          if (vehiclesResp?.status === "fulfilled") {
+            vehicles = Array.isArray(vehiclesResp.value.data) ? vehiclesResp.value.data : [];
+          } else {
+            try {
+              const res2 = await api.get("/vehicles");
+              vehicles = Array.isArray(res2.data) ? res2.data : [];
+            } catch {
+              vehicles = [];
+            }
+          }
+
+          // defensive: determine ownership using various owner shapes
+          const meId = user?._id || user?.id;
+          const owned = (Array.isArray(vehicles) ? vehicles : []).filter((v) => {
+            const ownerId = v?.owner?._id || v?.owner || v?.ownerId;
+            return ownerId && meId ? String(ownerId) === String(meId) : false;
           });
-          setMyBikes(owned);
-          setListerBookings(Array.isArray(bookings) ? bookings : []);
+
+          if (mounted) {
+            setMyBikes(owned);
+            setListerBookings(bookingData);
+          }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard load error:", err);
+        // swallow—UI will show empty state
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    })();
+    };
+
+    // initial load
+    loadDashboard();
+
+    // listen for vehicle changes so the dashboard updates
+    const onVehiclesChange = () => {
+      loadDashboard();
+    };
+    window.addEventListener("vehicles:changed", onVehiclesChange);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("vehicles:changed", onVehiclesChange);
+    };
   }, [user]);
 
   // taker metrics
@@ -289,11 +329,11 @@ export default function Dashboard() {
                       {myBikes.map((m) => (
                         <div key={m._id} className="list-group-item d-flex justify-content-between align-items-center">
                           <div>
-                            <div style={{ fontWeight: 600 }}>{m.make} {m.model}</div>
+                            <div style={{ fontWeight: 600 }}>{m.title || m.make} {m.model}</div>
                             <div className="text-muted small">{m.year || ""}</div>
                           </div>
                           <div>
-                            <div className="small text-muted">₹{m.pricePerDay}/day</div>
+                            <div className="small text-muted">₹{m.rentPerDay || m.pricePerDay || m.price}/day</div>
                           </div>
                         </div>
                       ))}

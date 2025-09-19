@@ -9,7 +9,6 @@ const INR = (n) =>
     maximumFractionDigits: 0,
   }).format(n || 0);
 
-
 export default function Motorcycles() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,18 +33,27 @@ export default function Motorcycles() {
     );
   }, [form]);
 
+  // load vehicles for current lister (try /vehicles/mine first, fallback to /vehicles)
   const load = async () => {
     setLoading(true);
     setErr("");
     try {
-      // fetch current profile (defensive). We only use it here as `prof`,
-      // no need to keep it in component state since it's not used elsewhere.
+      // fetch current profile (defensive)
       const prof = await api.get("/auth/me").then((r) => r.data).catch(() => null);
 
-      // fetch vehicles for this lister
-      const list = await api.get("/vehicles/mine").then((r) => (Array.isArray(r.data) ? r.data : []));
+      // try to get only my vehicles (lister)
+      let list = [];
+      try {
+        const res = await api.get("/vehicles/mine");
+        list = Array.isArray(res.data) ? res.data : [];
+      } catch (err) {
+        // fallback to public list if /mine not accessible
+        console.warn("Could not fetch /vehicles/mine, falling back to /vehicles:", err?.response?.status);
+        const res2 = await api.get("/vehicles");
+        list = Array.isArray(res2.data) ? res2.data : [];
+      }
 
-      // defensive filter: ensure only vehicles owned by this user are shown
+      // defensive filter: ensure only vehicles owned by this user are shown when possible
       const safe = prof && prof.id
         ? list.filter((v) => {
             const ownerId = v.owner?._id || v.owner || v.ownerId;
@@ -54,7 +62,7 @@ export default function Motorcycles() {
         : list;
 
       // newest first
-      setRows(safe.slice().reverse());
+      setRows((safe || []).slice().reverse());
     } catch (e) {
       console.error("Load my vehicles error:", e);
       setErr(e?.response?.data?.message || "Failed to load motorcycles");
@@ -65,6 +73,14 @@ export default function Motorcycles() {
 
   useEffect(() => {
     load();
+
+    // listen for cross-component changes (add/delete)
+    const onVehiclesChanged = () => load();
+    window.addEventListener("vehicles:changed", onVehiclesChanged);
+
+    return () => {
+      window.removeEventListener("vehicles:changed", onVehiclesChanged);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -76,7 +92,7 @@ export default function Motorcycles() {
     // optimistic row — map to Vehicle shape minimally
     const optimistic = {
       _id: "tmp-" + Date.now(),
-      title: form.make, // using "make" as title/service name
+      title: form.make,
       brand: form.model,
       model: form.model,
       regNumber: form.regNumber,
@@ -90,10 +106,9 @@ export default function Motorcycles() {
         title: form.make.trim(),
         brand: form.model.trim(),
         model: form.model.trim(),
-        // optional: include regNumber in description (or add a regNumber field server-side)
         description: `Reg: ${form.regNumber.trim()}`,
         rentPerDay: Number(form.pricePerDay),
-        images: [], // optional
+        images: [],
       };
 
       const { data } = await api.post("/vehicles", payload);
@@ -101,6 +116,10 @@ export default function Motorcycles() {
       // replace optimistic row with real one (if created)
       setRows((r) => [data, ...r.filter((x) => x._id !== optimistic._id)]);
       setForm({ make: "", model: "", regNumber: "", pricePerDay: "" });
+
+      // notify other components that vehicles changed
+      window.dispatchEvent(new Event("vehicles:changed"));
+
       alert("Added ✅");
     } catch (e) {
       // rollback optimistic row
@@ -120,6 +139,10 @@ export default function Motorcycles() {
 
     try {
       await api.delete(`/vehicles/${id}`);
+
+      // notify other components that vehicles changed
+      window.dispatchEvent(new Event("vehicles:changed"));
+
       alert("Deleted ✅");
     } catch (e) {
       // rollback

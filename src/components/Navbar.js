@@ -59,6 +59,11 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       console.log("Logout clicked (Navbar)");
+      // call backend logout endpoint (if exists) - ignore errors
+      try {
+        await api.post("/auth/logout").catch(() => {});
+      } catch {}
+
       // call context logout if available and await possible promise
       if (typeof logout === "function") {
         const maybePromise = logout();
@@ -94,7 +99,9 @@ export default function Navbar() {
       }, 300);
     } catch (err) {
       console.error("Logout failed:", err);
-      try { localStorage.removeItem("token"); } catch {}
+      try {
+        localStorage.removeItem("token");
+      } catch {}
       window.location.href = "/login";
     }
   };
@@ -132,37 +139,51 @@ export default function Navbar() {
             {!user ? (
               <>
                 <li className="nav-item">
-                  <NavLink to="/login" className="nav-link text-dark">Login</NavLink>
+                  <NavLink to="/login" className="nav-link text-dark">
+                    Login
+                  </NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink to="/register" className="nav-link text-dark">Register</NavLink>
+                  <NavLink to="/register" className="nav-link text-dark">
+                    Register
+                  </NavLink>
                 </li>
               </>
             ) : (
               <>
                 <li className="nav-item">
-                  <NavLink to="/dashboard" className="nav-link text-dark">Dashboard</NavLink>
+                  <NavLink to="/dashboard" className="nav-link text-dark">
+                    Dashboard
+                  </NavLink>
                 </li>
 
                 {user.role === "taker" && (
                   <>
                     <li className="nav-item">
-                      <NavLink to="/book" className="nav-link text-dark">Book</NavLink>
+                      <NavLink to="/book" className="nav-link text-dark">
+                        Book
+                      </NavLink>
                     </li>
                     <li className="nav-item">
-                      <NavLink to="/my-bookings" className="nav-link text-dark">My Bookings</NavLink>
+                      <NavLink to="/my-bookings" className="nav-link text-dark">
+                        My Bookings
+                      </NavLink>
                     </li>
                   </>
                 )}
 
                 {user.role === "lister" && (
                   <li className="nav-item">
-                    <NavLink to="/lister/motorcycles" className="nav-link text-dark">My Motorcycles</NavLink>
+                    <NavLink to="/lister/motorcycles" className="nav-link text-dark">
+                      My Motorcycles
+                    </NavLink>
                   </li>
                 )}
 
                 <li className="nav-item">
-                  <NavLink to="/analytics" className="nav-link text-dark">Analytics</NavLink>
+                  <NavLink to="/analytics" className="nav-link text-dark">
+                    Analytics
+                  </NavLink>
                 </li>
               </>
             )}
@@ -177,11 +198,7 @@ export default function Navbar() {
                 <Avatar name={user.name} />
                 <span className="ms-2 text-dark small d-none d-lg-inline">{user.name}</span>
               </div>
-              <button
-                className="btn btn-primary btn-sm ms-3"
-                onClick={handleLogout}
-                aria-label="Logout"
-              >
+              <button className="btn btn-primary btn-sm ms-3" onClick={handleLogout} aria-label="Logout">
                 Logout
               </button>
             </>

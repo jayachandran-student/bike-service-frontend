@@ -20,7 +20,7 @@ function Register() {
   }, [user, navigate]);
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -28,6 +28,24 @@ function Register() {
     setMessage("");
     try {
       const result = await register(formData);
+
+      // If API returned token & user, save and go to dashboard
+      const token = result?.token || result?.data?.token;
+      const userObj = result?.user || result?.data?.user;
+
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+      if (userObj) {
+        localStorage.setItem("user", JSON.stringify(userObj));
+      }
+
+      if (token && userObj) {
+        // immediate login UX
+        navigate("/dashboard");
+        return;
+      }
+
       if (result.success) {
         setMessage("Registered successfully ✅ Redirecting to login...");
         setTimeout(() => navigate("/login"), 1400);
@@ -35,7 +53,9 @@ function Register() {
         setMessage(result.message || "Registration failed ❌");
       }
     } catch (err) {
-      setMessage(err?.message || "Registration failed ❌");
+      console.error("Register error:", err);
+      const resp = err?.response?.data;
+      setMessage(resp?.message || err?.message || "Registration failed ❌");
     }
   };
 

@@ -19,13 +19,24 @@ const Login = () => {
     setMessage("");
     try {
       const result = await login(email, password);
+
+      // Save token and user (defensive)
+      if (result?.token) localStorage.setItem("token", result.token);
+      if (result?.user) localStorage.setItem("user", JSON.stringify(result.user));
+      if (!result?.token && result?.data?.token) localStorage.setItem("token", result.data.token);
+      if (!result?.user && result?.data?.user) localStorage.setItem("user", JSON.stringify(result.data.user));
+
       if (result.success) {
         navigate("/dashboard");
       } else {
         setMessage(result.message || "Login failed ❌");
       }
     } catch (err) {
-      setMessage(err?.message || "Login failed ❌");
+      console.error("Login error:", err);
+      const resp = err?.response?.data;
+      if (resp?.token) localStorage.setItem("token", resp.token);
+      if (resp?.user) localStorage.setItem("user", JSON.stringify(resp.user));
+      setMessage(resp?.message || err?.message || "Login failed ❌");
     }
   };
 

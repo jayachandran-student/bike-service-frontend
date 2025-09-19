@@ -14,7 +14,8 @@ import { ToastProvider } from "./context/ToastContext";
 
 // new pages we added
 import VehicleDetails from "./pages/VehicleDetails";
-import MyVehicle from "./pages/MyVehicle";    
+import VehiclesGrid from "./pages/VehiclesGrid";   // <-- NEW
+import MyVehicle from "./pages/MyVehicle";
 import AddVehicle from "./pages/AddVehicle";
 
 function App() {
@@ -25,11 +26,13 @@ function App() {
           <Navbar />
           <Routes>
             {/* public */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Landing to vehicles listing so reviewers/users see listings immediately */}
+            <Route path="/" element={<Navigate to="/vehicles" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* public vehicle details (single page) */}
+            {/* public vehicles listing + details */}
+            <Route path="/vehicles" element={<VehiclesGrid />} />        {/* <-- listing page */}
             <Route path="/vehicle/:id" element={<VehicleDetails />} />
 
             {/* protected – common */}
@@ -105,7 +108,7 @@ function App() {
             />
 
             {/* fallback */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/vehicles" replace />} />
           </Routes>
         </BrowserRouter>
       </ToastProvider>

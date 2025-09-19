@@ -15,7 +15,7 @@ function loadRazorpay() {
 }
 
 export default function Checkout() {
-  const toast = useToast(); // ⭐
+  const toast = useToast();
   const navigate = useNavigate();
   const { search } = useLocation();
   const params = new URLSearchParams(search);
@@ -38,15 +38,17 @@ export default function Checkout() {
 
         const key = process.env.REACT_APP_RAZORPAY_KEY_ID;
         if (!key) {
-          setMsg("Razorpay Key ID not found. Set REACT_APP_RAZORPAY_KEY_ID in .env and restart.");
+          const m = "Razorpay Key ID not found. Set REACT_APP_RAZORPAY_KEY_ID in .env/Netlify env.";
+          setMsg(m);
+          toast.error(m);
           setBusy(false);
           return;
         }
-        // console.debug("[checkout] using key:", key);
 
-        // Get booking to show amount/labels
-        const { data: mine } = await api.get("/bookings/mine");
-        const booking = mine.find((b) => b._id === bookingId);
+        // fetch the specific booking to get price
+        const { data: booking } = await api.get(`/bookings/${bookingId}`);
+
+        
         if (!booking) {
           setMsg("Booking not found. Please try again.");
           setBusy(false);
@@ -75,11 +77,11 @@ export default function Checkout() {
                 razorpay_signature: response.razorpay_signature,
                 bookingId,
               });
-              toast.success("Payment successful! Booking confirmed ✅"); // ⭐
+              toast.success("Payment successful! Booking confirmed ✅");
               navigate("/my-bookings", { replace: true });
             } catch (err) {
               const m = err?.response?.data?.message || "Verification failed — please check My Bookings.";
-              toast.error(m); // ⭐
+              toast.error(m);
               navigate("/my-bookings", { replace: true });
             }
           },
@@ -91,12 +93,9 @@ export default function Checkout() {
 
         rzp.open();
       } catch (e) {
-        const m =
-          e?.response?.data?.message ||
-          e?.message ||
-          "Could not start payment. Please try again.";
+        const m = e?.response?.data?.message || e?.message || "Could not start payment. Please try again.";
         setMsg(m);
-        toast.error(m); // ⭐
+        toast.error(m);
       } finally {
         setBusy(false);
       }
