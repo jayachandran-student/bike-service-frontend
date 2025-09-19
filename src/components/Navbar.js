@@ -1,4 +1,3 @@
-// src/components/Navbar.js
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -59,10 +58,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       console.log("Logout clicked (Navbar)");
+
       // call backend logout endpoint (if exists) - ignore errors
       try {
         await api.post("/auth/logout").catch(() => {});
-      } catch {}
+      } catch (e) {
+        /* ignore */
+      }
 
       // call context logout if available and await possible promise
       if (typeof logout === "function") {
@@ -89,7 +91,7 @@ export default function Navbar() {
         console.warn("error clearing axios header", e);
       }
 
-      // navigate
+      // navigate to login
       navigate("/login");
       // fallback hard redirect if navigation didn't change location
       setTimeout(() => {
@@ -133,7 +135,7 @@ export default function Navbar() {
           <span className="navbar-toggler-icon"></span>
         </button>
 
-        {/* Links */}
+        {/* Links (collapsible) */}
         <div className="collapse navbar-collapse" id="navbarsExample">
           <ul className="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
             {!user ? (
@@ -185,12 +187,23 @@ export default function Navbar() {
                     Analytics
                   </NavLink>
                 </li>
+
+                {/* Logout inside collapsed menu for mobile/hamburger users */}
+                <li className="nav-item d-lg-none">
+                  <button
+                    onClick={handleLogout}
+                    className="nav-link btn btn-link text-dark"
+                    style={{ textDecoration: "none" }}
+                  >
+                    Logout
+                  </button>
+                </li>
               </>
             )}
           </ul>
         </div>
 
-        {/* Right: always-visible profile + logout (outside collapse so visible on small screens) */}
+        {/* Right: profile + logout (visible on large screens) */}
         <div className="d-flex align-items-center ms-3">
           {user ? (
             <>
@@ -198,7 +211,11 @@ export default function Navbar() {
                 <Avatar name={user.name} />
                 <span className="ms-2 text-dark small d-none d-lg-inline">{user.name}</span>
               </div>
-              <button className="btn btn-primary btn-sm ms-3" onClick={handleLogout} aria-label="Logout">
+              <button
+                className="btn btn-primary btn-sm ms-3 d-none d-lg-inline"
+                onClick={handleLogout}
+                aria-label="Logout"
+              >
                 Logout
               </button>
             </>
